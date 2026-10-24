@@ -1,7 +1,7 @@
 import json
 import re
 from pathlib import Path
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, SoupStrainer
 
 
 def obter_data(div: BeautifulSoup) -> str | None:
@@ -80,7 +80,8 @@ def extrair_clicked_product(div: BeautifulSoup) -> str | None:
         return None
 
     texto_completo = content_cell.get_text()
-    match = re.search(r"Clicked on product:\s*\u2022\s*([^\n]+)", texto_completo)
+    match = re.search(
+        r"Clicked on product:\s*\u2022\s*([^\n]+)", texto_completo)
     if match:
         return match.group(1).strip()
     return None
@@ -107,7 +108,7 @@ def determinar_content_type(product: str, action: str) -> str:
     return "unknown"
 
 
-def process_history(input_file: str = 'Minhaatividade_teste.html', output_file: str = 'historico.json') -> list[dict]:
+def process_history(input_file: str = 'Minhaatividade.html', output_file: str = 'historico.json') -> list[dict]:
     caminho_arquivo = Path(input_file)
 
     if not caminho_arquivo.exists():
@@ -115,7 +116,9 @@ def process_history(input_file: str = 'Minhaatividade_teste.html', output_file: 
             f"Arquivo de entrada não encontrado: {input_file}")
 
     with open(caminho_arquivo, "r", encoding="utf-8") as file:
-        content = BeautifulSoup(file, "html.parser")
+        only_cells = SoupStrainer(
+            "div", class_="outer-cell mdl-cell mdl-cell--12-col mdl-shadow--2dp")
+        content = BeautifulSoup(file, "lxml", parse_only=only_cells)
 
     historico: list[dict] = []
     for div in content.find_all("div", class_="outer-cell mdl-cell mdl-cell--12-col mdl-shadow--2dp"):
